@@ -68,6 +68,7 @@
                     <th>Identifiant Notaire</th>
                     <th>Nom & Prénom</th>
                     <th>Ville</th>
+                    <th>source_requete</th>
                     <th>Canal</th>
                     <th>Objet</th>
                     <th>Message</th>
@@ -90,6 +91,7 @@
                     <td>{{ $rec->identifiant_notaire ?? '-' }}</td>
                     <td>{{ $rec->nom_prenom ?? '-' }}</td>
                     <td>{{ $rec->ville ?? '-' }}</td>
+                    <td>{{ $rec->source_requete ?? '-' }}</td>
                     <td>{{ $rec->canal }}</td>
                     <td>{{ $rec->objet }}</td>
                     <td>{{ Str::limit($rec->message, 50) }}</td>

@@ -176,43 +176,55 @@ class ReclamationController extends Controller
      * But : Traiter les modifications du formulaire et sauvegarder les changements
      * Objectif final : Modifier une réclamation existante avec les nouvelles données
      */
-    public function update(Request $request, $id)
-    {
-        // Trouver la réclamation à modifier
-        $reclamation = Reclamation::findOrFail($id);
-        
-        // Valider les nouvelles données
-        $validated = $this->validateReclamation($request);
+   public function update(Request $request, $id)
+{
+    // Trouver la réclamation à modifier
+    $reclamation = Reclamation::findOrFail($id);
+    
+    // Valider les nouvelles données
+    $validated = $this->validateReclamation($request);
 
-        try {
-            // Gérer le remplacement du fichier joint si un nouveau fichier est uploadé
-            if ($request->hasFile('document')) {
-                // Supprimer l'ancien fichier s'il existe
-                if ($reclamation->piece_jointe_path && Storage::disk('public')->exists($reclamation->piece_jointe_path)) {
-                    // delete() supprime physiquement le fichier du disque
-                    Storage::disk('public')->delete($reclamation->piece_jointe_path);
-                }
-                
-                // Sauvegarder le nouveau fichier et mettre à jour le chemin
-                $validated['piece_jointe_path'] = $request->file('document')->store('reclamations', 'public');
+    try {
+        // Gérer le remplacement du fichier joint si un nouveau fichier est uploadé
+        if ($request->hasFile('document')) {
+            // Supprimer l'ancien fichier s'il existe
+            if ($reclamation->piece_jointe_path && Storage::disk('public')->exists($reclamation->piece_jointe_path)) {
+                Storage::disk('public')->delete($reclamation->piece_jointe_path);
             }
-
-            // Mettre à jour la réclamation avec les nouvelles données
-            // update() modifie l'enregistrement existant dans la base de données
-            $reclamation->update($validated);
-
-            // Rediriger avec un message de succès
-            return redirect()->route('reclamations.index')
-                ->with('success', 'Réclamation mise à jour avec succès.');
-
-        } catch (\Exception $e) {
-            // Gérer les erreurs de mise à jour
-            Log::error('Error updating reclamation: ' . $e->getMessage());
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
+            
+            // Sauvegarder le nouveau fichier et mettre à jour le chemin
+            $validated['piece_jointe_path'] = $request->file('document')->store('reclamations', 'public');
         }
+        
+        // Convertir la date si nécessaire
+        if (isset($validated['date_reclamation'])) {
+            $validated['date_reclamation'] = Carbon::parse($validated['date_reclamation']);
+        }
+        
+        // Nettoyer les champs texte
+        $textFields = ['nom_prenom', 'ville', 'message', 'remarque_matnuhpv', 'cnie'];
+        foreach ($textFields as $field) {
+            if (isset($validated[$field])) {
+                $validated[$field] = trim($validated[$field]);
+            }
+        }
+        
+        // Mettre à jour la réclamation avec les nouvelles données
+        $reclamation->update($validated);
+        
+
+
+        // Rediriger avec un message de succès
+        return redirect()->route('reclamations.index')
+            ->with('success', 'Réclamation mise à jour avec succès.');
+
+    } catch (\Exception $e) {
+        // Gérer les erreurs de mise à jour
+        return redirect()->back()
+            ->withInput()
+            ->with('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
     }
+}
 
     /**
      * Supprimer une réclamation
@@ -551,24 +563,32 @@ class ReclamationController extends Controller
      * But : Centraliser la validation des données pour éviter la répétition de code
      * Objectif final : Assurer que toutes les données sont correctes avant sauvegarde
      */
-    private function validateReclamation(Request $request): array
-    {
-        // validate() vérifie les données selon les règles définies
-        // Si la validation échoue, Laravel redirige automatiquement avec les erreurs
-        return $request->validate([
-            'source_requete' => 'required|string|max:255', // Obligatoire, texte, max 255 caractères
-            'date_reclamation' => 'required|date', // Obligatoire, format date valide
-            'reference_demande' => 'required|string|max:255',
-            'cnie' => 'nullable|string|max:255', // Optionnel
-            'nom_prenom' => 'nullable|string|max:255',
-            'ville' => 'nullable|string|max:255',
-            'canal' => 'required|string|max:255',
-            'objet' => 'required|in:ANNULATION,DOCUMENT,ELIGIBILITE,INFORMATION,MAJ,PAIEMENT,RESTITUTION', // Doit être une des valeurs listées
-            'message' => 'required|string',
-            'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:10240', // Fichier optionnel, formats spécifiques, max 10MB
-            'remarque_matnuhpv' => 'nullable|string',
-        ]);
-    }
+   private function validateReclamation(Request $request)
+{
+    return $request->validate([
+        'source_requete' => 'required|string|max:255',
+        'date_reclamation' => 'required|date',
+        'reference_externe_rec' => 'required|string|max:255',
+        'reference_demande' => 'required|string|max:255',
+        'cnie' => 'nullable|string|max:12|regex:/^[A-Z]{1,2}[0-9]{6,10}$/',
+        'nom_prenom' => 'required|string|max:255',
+        'ville' => 'nullable|string|max:255',
+        'canal_reclamation' => 'required|string|max:255',
+        'identifiant_notaire' => 'nullable|string|max:255',
+        'objet' => 'required|in:ANNULATION,DOCUMENT,ELIGIBILITE,INFORMATION,MAJ,PAIEMENT,RESTITUTION',
+        'message' => 'required|string|max:2000',
+        'document' => 'nullable|file|mimes:pdf,doc,docx,jpg,jpeg,png|max:2048',
+        'remarque_matnuhpv' => 'nullable|string|max:1000',
+    ], [
+        'cnie.regex' => 'Le format du CNIE n\'est pas valide.',
+        'date_reclamation.required' => 'La date de réclamation est obligatoire.',
+        'source_requete.required' => 'La source de la requête est obligatoire.',
+        'canal_reclamation.required' => 'Le canal de réclamation est obligatoire.',
+        'nom_prenom.required' => 'Le nom et prénom sont obligatoires.',
+        'document.max' => 'Le fichier ne doit pas dépasser 2MB.',
+        'message.max' => 'Le message ne doit pas dépasser 2000 caractères.',
+    ]);
+}
 
     /**
      * Méthode privée pour générer une référence externe unique
