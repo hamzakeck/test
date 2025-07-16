@@ -24,6 +24,8 @@
                         @method('PUT')
 
                         {{-- Section 1: Informations de base --}}
+
+                        {{-- test --}}
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2">Informations de base</h5>
