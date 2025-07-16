@@ -1,0 +1,159 @@
+
+===============================
+LARAVEL DEPLOYMENT GUIDE
+Guide de déploiement Laravel
+===============================
+
+===============================
+ENGLISH VERSION
+===============================
+
+Prerequisites:
+--------------
+- Windows server with XAMPP installed.
+- Laravel app copied to C:\xampp\htdocs\dashboard\test.
+- Apache must have mod_rewrite enabled.
+
+Steps to Deploy:
+----------------
+
+1. Configure Apache Virtual Host:
+
+   - Open the Apache virtual hosts configuration file:
+     C:\xampp\apache\conf\extra\httpd-vhosts.conf
+
+   - Add the following configuration at the end of the file:
+
+     <VirtualHost *:80>
+         ServerAdmin webmaster@localhost
+         DocumentRoot "C:/xampp/htdocs/dashboard/test/public"
+         ServerName localhost
+         <Directory "C:/xampp/htdocs/dashboard/test/public">
+             Options Indexes FollowSymLinks
+             AllowOverride All
+             Require all granted
+         </Directory>
+         ErrorLog "logs/test-error.log"
+         CustomLog "logs/test-access.log" combined
+     </VirtualHost>
+
+2. Enable mod_rewrite:
+
+   - Open the main Apache configuration file:
+     C:\xampp\apache\conf\httpd.conf
+
+   - Ensure the following line is present and NOT commented out (no # at start):
+     LoadModule rewrite_module modules/mod_rewrite.so
+
+3. Restart Apache:
+
+   - Use the XAMPP control panel to stop and start Apache to apply changes.
+
+4. Test Locally:
+
+   - Open a web browser on the server machine.
+   - Go to: http://localhost
+   - You should see your Laravel application's homepage.
+
+5. Access from LAN (Local Area Network):
+
+   - Open Command Prompt and type:
+     ipconfig
+
+   - Note the IPv4 address of the server (e.g., 192.168.1.100).
+   - On another computer connected to the same network, open a browser and visit:
+     http://<server-local-ip>
+
+6. Access from Internet:
+
+   - Open port 80 on Windows Firewall to allow inbound HTTP traffic.
+   - Configure your router to forward external port 80 to your server's local IP address on port 80.
+   - Determine your public IP address (you can check sites like https://whatismyipaddress.com).
+   - From any internet-connected device, visit:
+     http://<your-public-ip>
+
+Additional Notes:
+-----------------
+- Make sure your Laravel app’s storage and bootstrap/cache directories are writable.
+- Check your Laravel .env file for correct settings, especially APP_URL matching the URL you use.
+- If you want to use HTTPS, you will need to install an SSL certificate and configure Apache accordingly.
+- For friendly URLs, mod_rewrite is essential; confirm .htaccess exists in the public folder.
+
+===============================
+VERSION FRANÇAISE
+===============================
+
+Prérequis :
+-----------
+- Serveur Windows avec XAMPP installé.
+- Application Laravel copiée dans C:\xampp\htdocs\dashboard\test.
+- Apache doit avoir mod_rewrite activé.
+
+Étapes pour déployer :
+----------------------
+
+1. Configurer le Virtual Host Apache :
+
+   - Ouvrir le fichier de configuration des virtual hosts Apache :
+     C:\xampp\apache\conf\extra\httpd-vhosts.conf
+
+   - Ajouter cette configuration à la fin du fichier :
+
+     <VirtualHost *:80>
+         ServerAdmin webmaster@localhost
+         DocumentRoot "C:/xampp/htdocs/dashboard/test/public"
+         ServerName localhost
+         <Directory "C:/xampp/htdocs/dashboard/test/public">
+             Options Indexes FollowSymLinks
+             AllowOverride All
+             Require all granted
+         </Directory>
+         ErrorLog "logs/test-error.log"
+         CustomLog "logs/test-access.log" combined
+     </VirtualHost>
+
+2. Activer mod_rewrite :
+
+   - Ouvrir le fichier de configuration principal d'Apache :
+     C:\xampp\apache\conf\httpd.conf
+
+   - Vérifier que la ligne suivante existe et n'est pas commentée (pas de # au début) :
+     LoadModule rewrite_module modules/mod_rewrite.so
+
+3. Redémarrer Apache :
+
+   - Utiliser le panneau de contrôle XAMPP pour arrêter puis redémarrer Apache.
+
+4. Tester localement :
+
+   - Ouvrir un navigateur sur la machine serveur.
+   - Aller sur : http://localhost
+   - L'application Laravel doit s'afficher.
+
+5. Accès depuis le réseau local (LAN) :
+
+   - Ouvrir l'invite de commande et taper :
+     ipconfig
+
+   - Noter l'adresse IPv4 du serveur (exemple : 192.168.1.100).
+   - Depuis un autre ordinateur sur le même réseau, ouvrir un navigateur et aller à :
+     http://<ip-locale-du-serveur>
+
+6. Accès depuis Internet :
+
+   - Ouvrir le port 80 sur le pare-feu Windows pour autoriser le trafic HTTP entrant.
+   - Configurer le routeur pour rediriger le port externe 80 vers l'adresse IP locale du serveur, port 80.
+   - Trouver votre adresse IP publique (exemple : via https://whatismyipaddress.com).
+   - Depuis un appareil connecté à Internet, visiter :
+     http://<votre-ip-publique>
+
+Notes supplémentaires :
+-----------------------
+- Assurez-vous que les dossiers storage et bootstrap/cache de Laravel sont accessibles en écriture.
+- Vérifiez le fichier .env de Laravel pour que APP_URL corresponde à l'URL d'accès.
+- Pour utiliser HTTPS, vous devrez installer un certificat SSL et configurer Apache en conséquence.
+- Pour des URLs propres, mod_rewrite est indispensable ; assurez-vous que le fichier .htaccess existe dans le dossier public.
+
+===============================
+End of Guide / Fin du Guide
+===============================

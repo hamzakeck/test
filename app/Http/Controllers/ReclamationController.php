@@ -24,7 +24,7 @@ class ReclamationController extends Controller
 {
     // Constantes pour la configuration de l'API externe
     // Ces valeurs ne changent jamais pendant l'exécution du programme
-    private const API_URL = 'https://reclamation.free.beeceptor.com'; // URL de l'API externe, remplacer par l'URL réelle de l'API
+    private const API_URL = 'https://reclamation.free.beeceptor.com'; // important!!!!!!!!!!!!!!!!: URL de l'API externe, remplacer par l'URL réelle de l'API !!!!!!!!!!!!!!!
     private const API_TIMEOUT = 30; // Délai d'attente de reponses en secondes pour les requêtes API
 
     /**
@@ -35,8 +35,8 @@ class ReclamationController extends Controller
      */
     public function index(Request $request)
     {
-        // Commencer à construire la requête de base de données pour le modèle Reclamation
-        // query() crée un "Query Builder" qui nous permet de construire notre requête SQL étape par étape
+        //  construire la requête de base de données pour le modèle Reclamation
+        // query() crée un "Query Builder" qui nous permet de construire notre requête SQL étape par étape (Laravel's Eloquent ORM)
         $query = Reclamation::query();
 
         // Appliquer le filtre par statut d'envoi si fourni dans la requête
@@ -75,6 +75,7 @@ class ReclamationController extends Controller
                   ->orWhere('objet', 'LIKE', "%{$search}%")
                   // OU rechercher dans le message
                   ->orWhere('message', 'LIKE', "%{$search}%");
+                  //equivalent a WHERE (reference_externe_rec LIKE '%search%' OR objet LIKE '%search%' OR message LIKE '%search%')
             });
         }
 
@@ -163,9 +164,8 @@ class ReclamationController extends Controller
     public function edit($id)
     {
         // Trouver la réclamation par son ID ou lancer une exception 404 si non trouvée
-        // findOrFail() cherche l'enregistrement et lance une erreur 404 si pas trouvé
         $rec = Reclamation::findOrFail($id);
-        
+        // findOrFail() cherche l'enregistrement et lance une erreur 404 si pas trouvé
         // Retourner la vue d'édition avec les données de la réclamation
         return view('reclamations.edit', compact('rec'));
     }

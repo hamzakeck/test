@@ -1,28 +1,15 @@
-@extends('layouts.app')
-
-@section('content')
-<div class="min-h-screen flex items-center justify-center px-4 py-12 bg-gray-100 dark:bg-gray-900">
-    <div class="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow p-8 border border-gray-100 dark:border-gray-700">
-        
-        <h2 class="text-2xl font-bold text-gray-900 dark:text-white text-center mb-6">
-            Connexion à votre compte
-        </h2>
+<x-guest-layout>
+    <div class="auth-card">
+        <!-- Logo/Brand -->
+        <div class="auth-logo">
+            <h1>{{ config('app.name', 'Laravel') }}</h1>
+            <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">Connectez-vous à votre compte</p>
+        </div>
 
         <!-- Session Status -->
         @if (session('status'))
-            <div class="mb-4 text-sm text-green-600 dark:text-green-400">
+            <div style="background: #dcfce7; border: 1px solid #16a34a; color: #15803d; padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem; font-size: 0.875rem;">
                 {{ session('status') }}
-            </div>
-        @endif
-
-        <!-- Validation Errors -->
-        @if ($errors->any())
-            <div class="mb-4 text-sm text-red-600 dark:text-red-400">
-                <ul class="list-disc pl-5 space-y-1">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
             </div>
         @endif
 
@@ -30,41 +17,83 @@
         <form method="POST" action="{{ route('login') }}">
             @csrf
 
-            <!-- Email -->
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}"
-                    required autofocus autocomplete="username"
-                    class="mt-1 block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <!-- Email Address -->
+            <div class="form-group">
+                <label for="email" class="form-label">Adresse email</label>
+                <input 
+                    id="email" 
+                    class="form-input" 
+                    type="email" 
+                    name="email" 
+                    value="{{ old('email') }}" 
+                    required 
+                    autofocus 
+                    autocomplete="username"
+                    placeholder="votre@email.com"
+                />
+                @error('email')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
             </div>
 
             <!-- Password -->
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mot de passe</label>
-                <input id="password" type="password" name="password" required autocomplete="current-password"
-                    class="mt-1 block w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+            <div class="form-group">
+                <label for="password" class="form-label">Mot de passe</label>
+                <input 
+                    id="password" 
+                    class="form-input" 
+                    type="password" 
+                    name="password" 
+                    required 
+                    autocomplete="current-password"
+                    placeholder="Votre mot de passe"
+                />
+                @error('password')
+                    <div class="error-message">{{ $message }}</div>
+                @enderror
             </div>
 
-            <!-- Remember Me -->
-            <div class="flex items-center justify-between mb-6">
-                <label class="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <input type="checkbox" name="remember" class="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-800 text-indigo-600 shadow-sm focus:ring-indigo-500">
-                    <span class="ml-2">Se souvenir de moi</span>
+            <!-- Remember Me & Forgot Password -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; font-size: 0.875rem; color: #6b7280;">
+                    <input 
+                        type="checkbox" 
+                        name="remember" 
+                        style="margin-right: 0.5rem; accent-color: #3b82f6;"
+                    />
+                    Se souvenir de moi
                 </label>
-
+                
                 @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-sm text-indigo-600 hover:underline dark:text-indigo-400">
+                    <a href="{{ route('password.request') }}" class="auth-link" style="font-size: 0.875rem;">
                         Mot de passe oublié ?
                     </a>
                 @endif
             </div>
 
-            <!-- Submit -->
-            <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                Connexion
-            </button>
+            <!-- Submit Button -->
+            <div class="form-group">
+                <button type="submit" class="btn-primary">
+                    Se connecter
+                </button>
+            </div>
+
+            <!-- Register Link -->
+            <div class="text-center mt-4">
+                <p style="color: #6b7280; font-size: 0.875rem; margin: 0;">
+                    Pas encore de compte ?
+                    <a class="auth-link" href="{{ route('register') }}">
+                        Créer un compte
+                    </a>
+                </p>
+            </div>
         </form>
+
+        <!-- Footer -->
+        <div class="text-center mt-6" style="padding-top: 1.5rem; border-top: 1px solid #e5e7eb;">
+            <p style="color: #9ca3af; font-size: 0.75rem; margin: 0;">
+                Plateforme sécurisée de gestion des réclamations
+            </p>
+        </div>
     </div>
-</div>
-@endsection
+</x-guest-layout>
