@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
+
 use Carbon\Carbon;
 
 /**
@@ -108,52 +109,64 @@ class ReclamationController extends Controller
      * But : Traiter les données du formulaire, valider, sauvegarder et envoyer à l'API
      * Objectif final : Créer une nouvelle réclamation complète avec tous ses détails
      */
-    public function store(Request $request)
-    {
-        // Valider les données reçues du formulaire
-        // Cette méthode privée vérifie que toutes les données sont correctes
-        $validated = $this->validateReclamation($request);
+   public function store(Request $request)
+{
+    // Valider les données reçues du formulaire
+    $validated = $this->validateReclamation($request);
+    
+    // Utiliser un bloc try-catch pour gérer les erreurs possibles
+  try {
+    // Gestion du fichier joint
+    $documentPath = null;
 
-        // Utiliser un bloc try-catch pour gérer les erreurs possibles
-        try {
-            // Gérer l'upload du fichier joint
-            $documentPath = null; // Initialiser à null par défaut
-            
-            // Vérifier si un fichier a été uploadé
-            if ($request->hasFile('document')) {
-                // store() sauvegarde le fichier dans storage/app/public/reclamations
-                // et retourne le chemin relatif du fichier
-                $documentPath = $request->file('document')->store('reclamations', 'public');
-            }
-
-            // Créer la réclamation dans la base de données
-            // array_merge() combine les données validées avec les données supplémentaires
-            $reclamation = Reclamation::create(array_merge($validated, [
-                'piece_jointe_path' => $documentPath, // Chemin du fichier uploadé
-                'reference_externe_rec' => $this->generateExternalReference(), // Référence unique générée
-                'statut_envoi' => 'non_envoyé', // Statut initial
-                'statut_traitement' => 'Nouvelle réclamation', // Statut de traitement initial
-            ]));
-
-            // Envoyer la réclamation à l'API externe
-            $this->sendToApi($reclamation);
-
-            // Rediriger vers la liste avec un message de succès
-            // with() ajoute un message flash qui sera affiché une seule fois
-            return redirect()->route('reclamations.index')
-                ->with('success', 'Réclamation créée et envoyée avec succès.');
-
-        } catch (\Exception $e) {
-            // Si une erreur survient, l'enregistrer dans les logs
-            Log::error('Error creating reclamation: ' . $e->getMessage());
-            
-            // Retourner à la page précédente avec les données saisies et un message d'erreur
-            // withInput() garde les données du formulaire pour que l'utilisateur n'ait pas à tout retaper
-            return redirect()->back()
-                ->withInput()
-                ->with('error', 'Erreur lors de la création : ' . $e->getMessage());
-        }
+    if ($request->hasFile('document') && $request->file('document')->isValid()) {
+        $documentPath = $request->file('document')->store('reclamations', 'public');
     }
+
+    // Création de la réclamation
+    $reclamation = Reclamation::create([
+        'source_requete'        => $validated['source_requete'],
+        'date_reclamation'      => $validated['date_reclamation'],
+        'reference_externe_rec' => $validated['reference_externe_rec'],
+        'reference_demande'     => $validated['reference_demande'],
+        'nom_prenom'            => $validated['nom_prenom'],
+        'cnie'                  => $validated['cnie'] ?? null,
+        'ville'                 => $validated['ville'] ?? null,
+        'identifiant_notaire'   => $validated['identifiant_notaire'] ?? null,
+        'canal'                 => $validated['canal'],
+        'objet'                 => $validated['objet'],
+        'message'               => $validated['message'],
+        'remarque_matnuhpv'     => $validated['remarque_matnuhpv'] ?? null,
+        'statut_envoi'          => 'non_envoyé', // par défaut
+        'statut_traitement'     => $validated['statut_traitement'] ?? 'Nouvelle réclamation',
+        'piece_jointe_path'     => $documentPath,
+    ]);
+
+    // Tentative d'envoi à l'API externe
+    try {
+        $this->sendToApi($reclamation);
+
+        // Si succès, mettre à jour le statut
+        $reclamation->update(['statut_envoi' => 'envoyé']);
+
+        return redirect()->route('reclamations.index')
+            ->with('success', 'Réclamation créée et envoyée avec succès.');
+    } catch (\Exception $e) {
+        // Échec d'envoi, laisser "non_envoyé"
+        Log::warning('Échec de l’envoi API : ' . $e->getMessage());
+
+        return redirect()->route('reclamations.index')
+            ->with('warning', 'Réclamation créée mais non envoyée à l’API. Vous pourrez réessayer plus tard.');
+    }
+
+} catch (\Exception $e) {
+    Log::error('Erreur lors de la création : ' . $e->getMessage());
+
+    return redirect()->back()
+        ->withInput()
+        ->with('error', 'Erreur lors de la création : ' . $e->getMessage());
+}
+}
 
     /**
      * Afficher le formulaire d'édition d'une réclamation existante
@@ -180,10 +193,10 @@ class ReclamationController extends Controller
 {
     // Trouver la réclamation à modifier
     $reclamation = Reclamation::findOrFail($id);
-    
+   
     // Valider les nouvelles données
     $validated = $this->validateReclamation($request);
-
+    
     try {
         // Gérer le remplacement du fichier joint si un nouveau fichier est uploadé
         if ($request->hasFile('document')) {
@@ -191,33 +204,40 @@ class ReclamationController extends Controller
             if ($reclamation->piece_jointe_path && Storage::disk('public')->exists($reclamation->piece_jointe_path)) {
                 Storage::disk('public')->delete($reclamation->piece_jointe_path);
             }
-            
+           
             // Sauvegarder le nouveau fichier et mettre à jour le chemin
             $validated['piece_jointe_path'] = $request->file('document')->store('reclamations', 'public');
         }
-        
+       
         // Convertir la date si nécessaire
         if (isset($validated['date_reclamation'])) {
             $validated['date_reclamation'] = Carbon::parse($validated['date_reclamation']);
         }
-        
+       
         // Nettoyer les champs texte
-        $textFields = ['nom_prenom', 'ville', 'message', 'remarque_matnuhpv', 'cnie'];
+        $textFields = ['nom_prenom', 'ville', 'message', 'remarque_matnuhpv', 'cnie', 'source_requete', 'reference_externe_rec', 'reference_demande', 'identifiant_notaire'];
         foreach ($textFields as $field) {
             if (isset($validated[$field])) {
                 $validated[$field] = trim($validated[$field]);
             }
         }
+       
+        // Traitement spécifique pour les champs de statut
+        if (isset($validated['statut_envoi']) && empty($validated['statut_envoi'])) {
+            $validated['statut_envoi'] = null;
+        }
         
+        if (isset($validated['statut_traitement']) && empty($validated['statut_traitement'])) {
+            $validated['statut_traitement'] = null;
+        }
+       
         // Mettre à jour la réclamation avec les nouvelles données
         $reclamation->update($validated);
-        
-
-
+       
         // Rediriger avec un message de succès
         return redirect()->route('reclamations.index')
             ->with('success', 'Réclamation mise à jour avec succès.');
-
+            
     } catch (\Exception $e) {
         // Gérer les erreurs de mise à jour
         return redirect()->back()
@@ -370,12 +390,13 @@ class ReclamationController extends Controller
 
         try {
             // Obtenir le chemin physique du fichier uploadé
-            $path = $request->file('file')->getRealPath();
             
             // Lire le fichier Excel et convertir en tableau
             // toArray() convertit le fichier Excel en tableau PHP
             // [0] prend la première feuille du fichier Excel
-            $rows = Excel::toArray([], $path)[0];
+            $rows = Excel::toArray([], $request->file('file'))[0];
+
+
 
             // Vérifier que le fichier n'est pas vide
             if (empty($rows)) {
@@ -573,7 +594,7 @@ class ReclamationController extends Controller
         'cnie' => 'nullable|string|max:12|regex:/^[A-Z]{1,2}[0-9]{6,10}$/',
         'nom_prenom' => 'required|string|max:255',
         'ville' => 'nullable|string|max:255',
-        'canal_reclamation' => 'required|string|max:255',
+        'canal' => 'required|string|max:255',
         'identifiant_notaire' => 'nullable|string|max:255',
         'objet' => 'required|in:ANNULATION,DOCUMENT,ELIGIBILITE,INFORMATION,MAJ,PAIEMENT,RESTITUTION',
         'message' => 'required|string|max:2000',
@@ -583,7 +604,7 @@ class ReclamationController extends Controller
         'cnie.regex' => 'Le format du CNIE n\'est pas valide.',
         'date_reclamation.required' => 'La date de réclamation est obligatoire.',
         'source_requete.required' => 'La source de la requête est obligatoire.',
-        'canal_reclamation.required' => 'Le canal de réclamation est obligatoire.',
+        'canal.required' => 'Le canal de réclamation est obligatoire.',
         'nom_prenom.required' => 'Le nom et prénom sont obligatoires.',
         'document.max' => 'Le fichier ne doit pas dépasser 2MB.',
         'message.max' => 'Le message ne doit pas dépasser 2000 caractères.',

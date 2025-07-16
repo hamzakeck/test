@@ -15,7 +15,7 @@ class Reclamation extends Model
         'cnie',
         'nom_prenom',
         'ville',
-        'canal',
+        'canal_reclamation',
         'objet',
         'message',
         'statut_envoi',

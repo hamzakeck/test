@@ -24,8 +24,6 @@
                         @method('PUT')
 
                         {{-- Section 1: Informations de base --}}
-
-                        {{-- test --}}
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2">Informations de base</h5>
@@ -36,7 +34,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="source_requete" class="form-label">Source de la requête <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="source_requete" name="source_requete" value="{{ old('source_requete', $rec->source_requete) }}" required>
+                                    <input type="text" class="form-control" id="source_requete" name="source_requete" value="{{ old('source_requete', $rec->source_requete) }}" required placeholder="Ex: Web, Mobile, Email...">
                                 </div>
                             </div>
 
@@ -113,11 +111,11 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="canal_reclamation" class="form-label">Canal de réclamation <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="canal_reclamation" name="canal_reclamation" required>
+                                    <label for="canal" class="form-label">Canal de réclamation <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="canal" name="canal" required>
                                         <option value="">Sélectionner</option>
-                                        @foreach(['écrite', 'physique', 'par téléphone', 'web'] as $canal)
-                                            <option value="{{ $canal }}" @if(old('canal_reclamation', $rec->canal_reclamation) == $canal) selected @endif>{{ $canal }}</option>
+                                        @foreach(['Écrite', 'Physique', 'Par téléphone', 'Sur web'] as $canal)
+                                            <option value="{{ $canal }}" @if(old('canal', $rec->canal) == $canal) selected @endif>{{ $canal }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -145,16 +143,40 @@
                             </div>
                         </div>
 
-                        <div class="row">
+                        {{-- Section 4: Statuts --}}
+                        <div class="row mb-4 mt-4">
                             <div class="col-12">
+                                <h5 class="text-primary border-bottom pb-2">Statuts</h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="remarque_matnuhpv" class="form-label">Remarque MATNUHPV</label>
-                                    <textarea class="form-control" id="remarque_matnuhpv" name="remarque_matnuhpv" rows="2" placeholder="Remarques internes...">{{ old('remarque_matnuhpv', $rec->remarque_matnuhpv) }}</textarea>
+                                    <label for="statut_envoi" class="form-label">Statut d'envoi</label>
+                                    <select class="form-select" id="statut_envoi" name="statut_envoi">
+                                        <option value="">Sélectionner</option>
+                                        @foreach(['envoyé', 'non_envoyé'] as $statut)
+                                            <option value="{{ $statut }}" @if(old('statut_envoi', $rec->statut_envoi) == $statut) selected @endif>{{ ucfirst(str_replace('_', ' ', $statut)) }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="statut_traitement" class="form-label">Statut de traitement</label>
+                                    <select class="form-select" id="statut_traitement" name="statut_traitement">
+                                        <option value="">Sélectionner</option>
+                                        @foreach(['Nouvelle réclamation', 'En cours de traitement', 'En attente retour MATNUHPV','Traité'] as $statut)
+                                            <option value="{{ $statut }}" @if(old('statut_traitement', $rec->statut_traitement) == $statut) selected @endif>{{ ucfirst(str_replace('_', ' ', $statut)) }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- Section 4: Pièce jointe --}}
+                        {{-- Section 5: Pièce jointe --}}
                         <div class="row mb-4 mt-4">
                             <div class="col-12">
                                 <h5 class="text-primary border-bottom pb-2">Pièce jointe</h5>
