@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
+<div class="container-fluid"> {{-- Changed from container to container-fluid --}}
     <h2>Liste des Réclamations</h2>
 
     @if(session('success'))
@@ -57,151 +57,154 @@
         </div>
     </form>
 
-    <table class="table table-bordered table-hover table-striped">
-        <thead class="table-dark">
-            <tr>
-                <th>Réf. Externe</th>
-                <th>Réf. Demande</th>
-                <th>Réf. Réclamation API</th>
-                <th>Identifiant Notaire</th>
-                <th>Nom & Prénom</th>
-                <th>Ville</th>
-                <th>Canal</th>
-                <th>Objet</th>
-                <th>Message</th>
-                <th>Date Réclamation</th>
-                <th>Statut Envoi</th>
-                <th>Statut Traitement</th>
-                <th>Retour API</th>
-                <th>Remarque MATNUHPV</th>
-                <th>Pièce Jointe</th>
-                <th>Réponses</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($reclamations as $rec)
-            <tr>
-                <td>{{ $rec->reference_externe_rec }}</td>
-                <td>{{ $rec->reference_demande }}</td>
-                <td>{{ $rec->reference_reclamation ?? '-' }}</td>
-                <td>{{ $rec->identifiant_notaire ?? '-' }}</td>
-                <td>{{ $rec->nom_prenom ?? '-' }}</td>
-                <td>{{ $rec->ville ?? '-' }}</td>
-                <td>{{ $rec->canal }}</td>
-                <td>{{ $rec->objet }}</td>
-                <td>{{ Str::limit($rec->message, 50) }}</td>
-                <td>{{ \Carbon\Carbon::parse($rec->date_reclamation)->format('d/m/Y') }}</td>
-                <td>
-                    @if($rec->statut_envoi === 'envoyé')
-                        <span class="badge bg-success">Envoyé</span>
-                    @else
-                        <span class="badge bg-danger">Non envoyé</span>
-                    @endif
-                </td>
-                <td>{{ $rec->statut_traitement ?? '-' }}</td>
-                <td>
-                    <small>
-                        @if($rec->api_message_retour)
-                            {{ Str::limit($rec->api_message_retour, 30) }}
+    {{-- Added wrapper for horizontal scrolling --}}
+    <div class="table-responsive-custom">
+        <table class="table table-bordered table-hover table-striped wide-table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Réf. Externe</th>
+                    <th>Réf. Demande</th>
+                    <th>Réf. Réclamation API</th>
+                    <th>Identifiant Notaire</th>
+                    <th>Nom & Prénom</th>
+                    <th>Ville</th>
+                    <th>Canal</th>
+                    <th>Objet</th>
+                    <th>Message</th>
+                    <th>Date Réclamation</th>
+                    <th>Statut Envoi</th>
+                    <th>Statut Traitement</th>
+                    <th>Retour API</th>
+                    <th>Remarque MATNUHPV</th>
+                    <th>Pièce Jointe</th>
+                    <th>Réponses</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($reclamations as $rec)
+                <tr>
+                    <td>{{ $rec->reference_externe_rec }}</td>
+                    <td>{{ $rec->reference_demande }}</td>
+                    <td>{{ $rec->reference_reclamation ?? '-' }}</td>
+                    <td>{{ $rec->identifiant_notaire ?? '-' }}</td>
+                    <td>{{ $rec->nom_prenom ?? '-' }}</td>
+                    <td>{{ $rec->ville ?? '-' }}</td>
+                    <td>{{ $rec->canal }}</td>
+                    <td>{{ $rec->objet }}</td>
+                    <td>{{ Str::limit($rec->message, 50) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($rec->date_reclamation)->format('d/m/Y') }}</td>
+                    <td>
+                        @if($rec->statut_envoi === 'envoyé')
+                            <span class="badge bg-success">Envoyé</span>
+                        @else
+                            <span class="badge bg-danger">Non envoyé</span>
+                        @endif
+                    </td>
+                    <td>{{ $rec->statut_traitement ?? '-' }}</td>
+                    <td>
+                        <small>
+                            @if($rec->api_message_retour)
+                                {{ Str::limit($rec->api_message_retour, 30) }}
+                            @else
+                                -
+                            @endif
+                        </small>
+                    </td>
+                    <td>{{ $rec->remarque_matnuhpv ?? '-' }}</td>
+                    <td>
+                        @if ($rec->piece_jointe_path)
+                            <a href="{{ asset('storage/' . $rec->piece_jointe_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">Voir</a>
                         @else
                             -
                         @endif
-                    </small>
-                </td>
-                <td>{{ $rec->remarque_matnuhpv ?? '-' }}</td>
-                <td>
-                    @if ($rec->piece_jointe_path)
-                        <a href="{{ asset('storage/' . $rec->piece_jointe_path) }}" target="_blank" class="btn btn-sm btn-outline-primary">Voir</a>
-                    @else
-                        -
-                    @endif
-                </td>
-                <td>
-                    @php
-                        $responses = $rec->responses;
-                    @endphp
+                    </td>
+                    <td>
+                        @php
+                            $responses = $rec->responses;
+                        @endphp
 
-                    @if ($responses && $responses->count() > 0)
-                        <div class="dropdown">
-                            <button 
-    class="btn btn-sm btn-outline-info dropdown-toggle" 
-    type="button" 
-    data-bs-toggle="dropdown" 
-    aria-expanded="false"
-    data-bs-auto-close="outside"
-    title="Afficher les réponses"
-                            >
-                                Voir les réponses ({{ $responses->count() }})
-                            </button>
+                        @if ($responses && $responses->count() > 0)
+                            <div class="dropdown">
+                                <button 
+        class="btn btn-sm btn-outline-info dropdown-toggle" 
+        type="button" 
+        data-bs-toggle="dropdown" 
+        aria-expanded="false"
+        data-bs-auto-close="outside"
+        title="Afficher les réponses"
+                                >
+                                    Voir les réponses ({{ $responses->count() }})
+                                </button>
 
-                            <div class="dropdown-menu p-2" style="min-width: 400px; max-height: 300px; overflow-y: auto;">
-                                <table class="table table-sm table-bordered mb-0">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>État</th>
-                                            <th>Type</th>
-                                            <th>Message</th>
-                                            <th>Supprimer</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($responses as $res)
+                                <div class="dropdown-menu p-2" style="min-width: 400px; max-height: 300px; overflow-y: auto;">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-light">
                                             <tr>
-                                                <td>{{ \Carbon\Carbon::parse($res->date_reponse)->format('d/m/Y H:i') }}</td>
-                                                <td>{{ $res->etat }}</td>
-                                                <td>{{ $res->type_operation }}</td>
-                                                <td>{{ Str::limit($res->reponse, 40) }}</td>
-                                                <td>
-                                                    <form action="{{ route('reclamation-responses.destroy', $res->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?');" style="display:inline-block;">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
-                                                    </form>
-                                                </td>
+                                                <th>Date</th>
+                                                <th>État</th>
+                                                <th>Type</th>
+                                                <th>Message</th>
+                                                <th>Supprimer</th>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($responses as $res)
+                                                <tr>
+                                                    <td>{{ \Carbon\Carbon::parse($res->date_reponse)->format('d/m/Y H:i') }}</td>
+                                                    <td>{{ $res->etat }}</td>
+                                                    <td>{{ $res->type_operation }}</td>
+                                                    <td>{{ Str::limit($res->reponse, 40) }}</td>
+                                                    <td>
+                                                        <form action="{{ route('reclamation-responses.destroy', $res->id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette réponse ?');" style="display:inline-block;">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-sm btn-danger">🗑️</button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                        </div>
-                    @else
-                        <span class="text-muted">Aucune réponse</span>
-                    @endif
+                        @else
+                            <span class="text-muted">Aucune réponse</span>
+                        @endif
 
-                    <!-- Fetch responses button -->
-                    <form action="{{ route('reclamations.fetch-responses', $rec->id) }}" method="POST" class="d-inline mt-2">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Récupérer les réponses">
-                             Réponses
-                        </button>
-                    </form>
-                </td>
-                <td class="text-nowrap">
-                    <a href="{{ route('reclamations.edit', $rec->id) }}" class="btn btn-info btn-sm" title="Modifier">✏️</a>
-
-                    @if($rec->statut_envoi === 'non_envoyé')
-                        <form action="{{ route('reclamations.retry', $rec->id) }}" method="POST" class="d-inline">
+                        <!-- Fetch responses button -->
+                        <form action="{{ route('reclamations.fetch-responses', $rec->id) }}" method="POST" class="d-inline mt-2">
                             @csrf
-                            <button class="btn btn-warning btn-sm" title="Renvoyer">↻</button>
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Récupérer les réponses">
+                                 Réponses
+                            </button>
                         </form>
-                    @endif
+                    </td>
+                    <td class="text-nowrap">
+                        <a href="{{ route('reclamations.edit', $rec->id) }}" class="btn btn-info btn-sm" title="Modifier">✏️</a>
 
-                    <form action="{{ route('reclamations.destroy', $rec->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer cette réclamation ?')">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-danger btn-sm" title="Supprimer">🗑</button>
-                    </form>
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="17" class="text-center text-muted">Aucune réclamation trouvée.</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+                        @if($rec->statut_envoi === 'non_envoyé')
+                            <form action="{{ route('reclamations.retry', $rec->id) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button class="btn btn-warning btn-sm" title="Renvoyer">↻</button>
+                            </form>
+                        @endif
+
+                        <form action="{{ route('reclamations.destroy', $rec->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Supprimer cette réclamation ?')">
+                            @csrf
+                            @method('DELETE')
+                            <button class="btn btn-danger btn-sm" title="Supprimer">🗑</button>
+                        </form>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="17" class="text-center text-muted">Aucune réclamation trouvée.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 
     <div class="d-flex justify-content-center mt-3">
         {{ $reclamations->withQueryString()->links() }}
